@@ -7,9 +7,17 @@ on:
 
 permissions:
   contents: read
+  security-events: write
+
+env:
+  ENABLE_SONAR: ${{ vars.ENABLE_SONAR || 'false' }}
+  ENABLE_NPM_AUDIT: ${{ vars.ENABLE_NPM_AUDIT || 'false' }}
+  ENABLE_GITLEAKS: ${{ vars.ENABLE_GITLEAKS || 'false' }}
+  ENABLE_CODEQL: ${{ vars.ENABLE_CODEQL || 'false' }}
 
 jobs:
   ci:
+    name: Lint, architecture, tests and build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -18,7 +26,54 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
-      - run: npm run lint
-      - run: npm run architecture
-      - run: npm test
-      - run: npm run build
+      - name: Lint
+        run: npm run lint
+      - name: PowerShell syntax
+        shell: pwsh
+        run: npm run lint:powershell
+      - name: Architecture tests
+        shell: pwsh
+        run: npm run architecture
+      - name: Context documentation gate
+        shell: pwsh
+        run: npm run context
+      - name: Change documentation gate
+        shell: pwsh
+        run: npm run changes
+      - name: Unit tests
+        run: npm test
+      - name: Production build
+        run: npm run build
+      - name: Optional npm audit
+        if: env.ENABLE_NPM_AUDIT == 'true'
+        run: npm audit --audit-level=moderate
+      - name: Optional Sonar scan
+        if: env.ENABLE_SONAR == 'true'
+        uses: SonarSource/sonarqube-scan-action@v6
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ vars.SONAR_HOST_URL }}
+        with:
+          args: >
+            -Dsonar.projectKey=${{ vars.SONAR_PROJECT_KEY }}
+            -Dsonar.organization=${{ vars.SONAR_ORGANIZATION }}
+            -Dsonar.sources=src
+            -Dsonar.tests=src
+            -Dsonar.test.inclusions=src/**/*.spec.ts
+      - name: Optional Gitleaks secret scan
+        if: env.ENABLE_GITLEAKS == 'true'
+        uses: gitleaks/gitleaks-action@v2
+
+  codeql:
+    name: Optional CodeQL
+    if: ${{ vars.ENABLE_CODEQL == 'true' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: github/codeql-action/init@v3
+        with:
+          languages: javascript-typescript
+      - uses: github/codeql-action/analyze@v3

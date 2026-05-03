@@ -14,12 +14,16 @@ Base Angular frontend template for PDLC-managed applications.
 - `src/app`: Angular application code.
 - `sheriff.config.ts`: architecture boundaries.
 - `federation.config.js`: native federation configuration.
+- `scripts/ci`: static CI validation scripts for context docs, change docs and architecture boundaries.
+- `docs/changes`: change documentation required by quality gates.
 - `.github/workflows/ci.yml`: CI pipeline.
 
 ## Local Commands
 
 - `npm run lint`
 - `npm run architecture`
+- `npm run context`
+- `npm run changes`
 - `npm test`
 - `npm run build`
 
@@ -32,3 +36,5 @@ Base Angular frontend template for PDLC-managed applications.
 ## Child Contexts
 
 - `src/app/context.md`
+- `docs/context.md`
+- `scripts/context.md`

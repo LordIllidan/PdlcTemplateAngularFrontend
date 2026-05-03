@@ -7,9 +7,12 @@
     "build": "ng build",
     "test": "vitest run",
     "test:watch": "vitest",
-    "lint": "eslint . --max-warnings=0",
-    "architecture": "eslint \"src/**/*.ts\"",
-    "ci": "npm run lint && npm run architecture && npm test && npm run build"
+    "lint": "eslint \"src/**/*.ts\" --max-warnings=0",
+    "lint:powershell": "pwsh -NoProfile -File ./scripts/ci/Test-PowerShellSyntax.ps1",
+    "architecture": "pwsh ./scripts/ci/Test-ArchitectureBoundaries.ps1",
+    "context": "pwsh ./scripts/ci/Test-ContextDocs.ps1",
+    "changes": "pwsh ./scripts/ci/Test-ChangeDocs.ps1",
+    "ci": "npm run lint && npm run lint:powershell && npm run architecture && npm run context && npm run changes && npm test && npm run build"
   },
   "dependencies": {
     "@angular/animations": "^20.0.0",
